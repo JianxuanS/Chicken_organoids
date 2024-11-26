@@ -15,7 +15,11 @@
 #$ -pe sharedmem 8
 #$ -l h_rt=48:00:00
 #$ -l h_vmem=20G
+#$ -l rl9=false
 #$ -P roslin_macqueen_lab
+#$ -m beas
+#$ -M J.Sun-52@sms.ed.ac.uk
+
 
 # Make directory before STAR
 #
@@ -35,14 +39,14 @@ unzip STAR_2.7.10a_alpha_220601_Linux_x86_64_static.zip
 --genomeDir /exports/eddie/scratch/s1964742/Chicken_filtered_mat.layer \
 --sjdbOverhang 99 \
 --readFilesIn \
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L001_R2_001.fastq.gz",\
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L002_R2_001.fastq.gz",\
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L001_R2_001.fastq.gz",\
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L002_R2_001.fastq.gz" \
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L001_R1_001.fastq.gz",\
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L002_R1_001.fastq.gz",\
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L001_R1_001.fastq.gz",\
-"/exports/eddie/scratch/s1964742/chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L002_R1_001.fastq.gz" \
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L001_R2_001.fastq.gz",\
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L002_R2_001.fastq.gz",\
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L001_R2_001.fastq.gz",\
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L002_R2_001.fastq.gz" \
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L001_R1_001.fastq.gz",\
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_230323/outs/fastq_path/AAAYWGVHV/LV_1_S1_L002_R1_001.fastq.gz",\
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L001_R1_001.fastq.gz",\
+"/exports/eddie/scratch/s1964742/2023_chicken_organoid/LV_240323/outs/fastq_path/AAAYW7HHV/LV_1_S1_L002_R1_001.fastq.gz" \
 --readFilesCommand zcat \
 --outSAMtype BAM SortedByCoordinate \
 --outSAMmode Full \
