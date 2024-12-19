@@ -1,5 +1,6 @@
-# The Ensembl 110 layer genome lacks GO information 
-# To perform enrichment analysis, we need to map the layer genes to broiler genes. Using the Ensembl rapid release, approximately 95% of the layer genome has corresponding broiler homologs.
+# Ensembl 110 layer chicken genome lacks GO information 
+# To perform enrichment analysis, we need to map the layer genes to broiler genes. Using information from Ensembl rapid release, approximately 95% of the layer genome has corresponding broiler homologs.
+
 wget https://ftp.ensembl.org/pub/rapid-release/species/Gallus_gallus/GCA_016700215.2/ensembl/homology/2022_01/Gallus_gallus-GCA_016700215.2-2022_01-homology.tsv.gz
 wget https://ftp.ensembl.org/pub/release-113/gtf/gallus_gallus_gca016700215v2/Gallus_gallus_gca016700215v2.bGalGal1.pat.whiteleghornlayer.GRCg7w.113.gtf.gz
 gunzip *.gz
