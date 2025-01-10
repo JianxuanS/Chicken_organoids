@@ -1,0 +1,340 @@
+---
+title: "Chicken.Organoid"
+output: html_document
+date: "2023-08-08"
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(BiocManager)
+library(devtools)
+library(biomaRt)
+library(ggplot2)
+library(ggpubr)
+library(dplyr)
+library(R.utils)
+library(pcaMethods)
+library(magicfor)
+library(pagoda2)
+library(tidyr)
+library(Seurat)
+library(SeuratData)
+library(SeuratWrappers)
+library(scDblFinder)
+library(sctransform)
+library(gridExtra)
+library(monocle3)
+library(SoupX)
+library(Matrix)
+library(readr)
+library(fields)
+library(KernSmooth)
+library(ROCR)
+library(parallel)
+library(DoubletFinder)
+library(DropletUtils)
+library(patchwork)
+library(magrittr)
+library(harmony)
+library(openxlsx)
+library(readxl)
+library(ggrepel)
+library(org.Ssalar.eg.db)
+library(clusterProfiler)
+library(scales)
+library(dittoseq)
+
+set.seed(123)
+datapath <- "/external1/jianxuan/chicken_organoid/mat.layer/"
+savepath_rds <- "/external1/jianxuan/rds/Gallues.organoid/"
+savepath_figure <- "/external1/jianxuan/rds/Gallues.organoid/Figures"
+savepath_table <- "/external1/jianxuan/rds/Gallues.organoid/Tables"
+orig_idents <- paste0("adj.LV_", seq(1, 8))
+```
+```{r Functions}
+###################################
+### QC - individual samples ####
+################################### 
+JS_QC_individual <- function(sample_id, base_dir, savepath) {
+  # Set working directory dynamically based on sample_id
+  setwd(file.path(base_dir, sample_id, "Solo.out", "GeneFull_Ex50pAS/"))
+  
+  # Read data
+  filtered_data <- ReadSTARsolo("filtered/")
+  raw_data <- ReadSTARsolo("raw/")
+  
+  # Create Seurat object
+  filtered_obj <- CreateSeuratObject(counts = filtered_data, min.cells = 3, min.genes = 200, project = paste0("filtered_", sample_id))
+  
+  # SoupChannel
+  soup_channel <- SoupChannel(raw_data, filtered_data)
+  
+  # Pre-SoupX clustering
+  filtered_obj <- SCTransform(filtered_obj, verbose = TRUE) %>%
+    RunPCA(verbose = TRUE) %>%
+    RunUMAP(dims = 1:30, verbose = TRUE) %>%
+    FindNeighbors(dims = 1:30, verbose = TRUE) %>%
+    FindClusters(verbose = TRUE)
+  
+  # Add clustering info to SoupChannel and calculate ambient RNA profile
+  meta <- filtered_obj@meta.data
+  umap <- filtered_obj@reductions$umap@cell.embeddings
+  soup_channel <- soup_channel %>%
+    setClusters(setNames(meta$seurat_clusters, rownames(meta))) %>%
+    setDR(umap) %>%
+    autoEstCont()
+  
+  # Adjust matrix
+  adj_matrix <- adjustCounts(soup_channel, roundToInt = TRUE)
+  output_dir <- paste0("soupX_", sample_id, "_filt")
+  DropletUtils:::write10xCounts(output_dir, adj_matrix)
+  
+  # Start from adjusted matrix
+  adj_matrix <- ReadMtx(
+    mtx = file.path(output_dir, "matrix.mtx"),
+    cells = file.path(output_dir, "barcodes.tsv"),
+    features = file.path(output_dir, "genes.tsv")
+  )
+  
+  # Create Seurat object for adjusted matrix
+  adj_obj <- CreateSeuratObject(counts = adj_matrix, min.cells = 3, min.genes = 200, project = paste0("adj_", sample_id))
+  
+  # Remove poor-quality cells
+  adj_obj[["percent.mt"]] <- PercentageFeatureSet(adj_obj, pattern = "^MT-")
+  adj_obj <- subset(adj_obj, subset = nFeature_RNA > 200 & percent.mt < 5)
+  
+  # Normalize and process data
+  adj_obj <- NormalizeData(adj_obj, normalization.method = "LogNormalize", scale.factor = 10000) %>%
+    FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>%
+    ScaleData(vars.to.regress = "nCount_RNA") %>%
+    RunPCA(features = VariableFeatures(object = adj_obj)) %>%
+    FindNeighbors(dims = 1:20) %>%
+    FindClusters(resolution = 0.5) %>%
+    RunUMAP(dims = 1:20)
+  
+  # Plot UMAP
+  UMAPPlot(adj_obj, label = TRUE)
+  
+  # Find markers
+  markers <- FindAllMarkers(adj_obj, only.pos = TRUE, max.cells.per.ident = 200, logfc.thresh = 0.5)
+  View(markers)
+  
+  # Save results
+  saveRDS(adj_obj, file.path(savepath, paste0("adj_", sample_id, ".rds")))
+  
+  return(list(seurat_object = adj_obj, markers = markers))
+}
+
+################################### 
+# QC - doublets
+################################### 
+JS_QC_doublets <- function(seurat_obj, obj_name) {
+  # Create an original copy for comparison
+  orig_obj <- seurat_obj
+  
+  # Identify doublets using scDblFinder
+  sce <- scDblFinder(seurat_obj@assays$RNA@data, clusters = TRUE)
+  seurat_obj@meta.data$doublet.status <- sce$scDblFinder.class
+  
+  # Visualize doublets using UMAP
+  seurat_obj <- SetIdent(seurat_obj, value = "doublet.status")
+  print(UMAPPlot(seurat_obj, pt.size = 0.5))
+  
+  # Remove doublet clusters
+  seurat_obj <- subset(seurat_obj, cells = WhichCells(seurat_obj, idents = "singlet"))
+  
+  # Print removal summary
+  removed_count <- length(WhichCells(orig_obj)) - length(WhichCells(seurat_obj))
+  total_cells <- length(WhichCells(orig_obj))
+  percentage_removed <- round(100 * (1 - length(WhichCells(seurat_obj)) / total_cells), 2)
+  
+  message <- paste0(
+    removed_count, " doublets removed from ", obj_name, ". (", 
+    percentage_removed, "%)"
+  )
+  print(message)
+  
+  # Return the cleaned Seurat object
+  return(seurat_obj)
+}
+
+###################################
+### Creating a faster scaling function for Harmony only ###
+###################################
+JS_scaling <- function(seuratobject, dims = 1:20, max.iter.harmony = 25) {
+  scaled_date <- ScaleData(seuratobject, model.use = "negbinom") %>%
+    RunPCA(verbose = FALSE) %>%
+    RunHarmony(group.by.vars = "orig.ident", max.iter.harmony = max.iter.harmony) %>%
+    RunUMAP(reduction = "harmony", dims = dims) %>%
+    FindNeighbors(reduction = "harmony", dims = dims) %>%
+    FindClusters()
+  return(scaled_date)
+}
+
+###################################
+### Creating heatmap functions ####
+################################### Annotations are reversed!!!
+JS_heatmap <- function(seuratobject,seuratobject_markers){
+  Scaledseurat <- ScaleData(seuratobject, features = seuratobject@assays$RNA@data@Dimnames[[1]], model.use = "negbinom")
+  top20 <- seuratobject_markers %>%
+    group_by(cluster) %>%
+    top_n(n = 20, wt = avg_log2FC)
+  Top100 <- subset(Scaledseurat,downsample=100)
+  Heatmap <- DoHeatmap(Top100, features = top20$gene)+
+    scale_fill_gradientn(colors = c("blue", "white", "red"),na.value = "white")
+  Heatmap
+}
+
+###################################
+### Creating Piechart functions ###
+###################################
+# Not in use
+JS_piechart <- function(orig.ident, title){
+  ggplot(orig.ident, aes(x = "", y = Percentage, fill = cell.types)) +
+    labs(title = title) +
+    theme(plot.title = element_text(hjust = 0.5, size = 20, face = "bold")) +
+    geom_col(colour = "black") +
+    coord_polar("y", start = 0) +
+    geom_text(aes(label = paste0(Percentage, "%")), position = position_stack(vjust = 0.5)) +
+    labs(x = NULL, y = NULL, fill = NULL) +
+    theme(axis.line = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), panel.background = element_blank()) +
+    theme_void()
+}
+
+#####################################
+#### Creating Piegraph functions ####
+#####################################
+# Not in use
+JS_piegraph <- function(seuratobject){
+  a <- table(Idents(seuratobject), seuratobject$orig.ident) %>%
+    as.data.frame() %>%
+    dplyr::rename(cell.types=Var1, orig.ident=Var2, numbers=Freq)
+  b <- list()
+  c <- c("adj.as18","adj.as20","adj.pbs3","adj.pbs6")
+  for (i in 1:length(c)) {
+    b[[i]] <- subset(a, orig.ident == c[[i]]) %>%
+      mutate(Percentage = numbers/sum(numbers) * 100) %>%
+      mutate_if(is.numeric, round)
+  }
+  d <- list()
+  for (i in 1:length(c)) {
+    d[[i]] <- JS_piechart(b[[i]], title = c[[i]])
+  }
+  e <- ggarrange(d[[1]],d[[2]],d[[3]],d[[4]],
+                 ncol = 2, nrow = 2)
+  e
+}
+
+#####################################
+#### Calculate cell type proportion ####
+#####################################
+JS_cell_type_proportions <- function(Input_seurat_object, orig_idents) {
+  # Generate the cell type and condition combinations using expand.grid
+  condition_combinations <- expand.grid(
+    Cell_type = unique(Input_seurat_object@active.ident),
+    Condition = orig_idents
+  )
+  
+  # Calculate the frequency for each combination using mapply for efficiency
+  condition_combinations$Freq <- mapply(function(cell_type, orig_ident) {
+    sum(Input_seurat_object@meta.data$orig.ident == orig_ident & Input_seurat_object@active.ident == cell_type)
+  }, condition_combinations$Cell_type, condition_combinations$Condition)
+  
+  # Return the final data frame with proportions
+  return(condition_combinations)
+}
+
+#####################################
+######## Read Velocyto data #########
+#####################################
+# Not in use
+JS_readVelocyto <- function(seuratobject,filepath,matchobject){
+  setwd(filepath)
+  spliced <- ReadMtx(mtx = "Velocyto/raw/spliced.mtx",
+                     cells = "Velocyto/raw/barcodes.tsv",
+                     features = "Velocyto/raw/features.tsv")
+  spliced@Dimnames[[2]] <- paste(seuratobject,spliced@Dimnames[[2]],sep = "_")
+  spliced <- spliced[,which(spliced@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
+  unspliced <- ReadMtx(mtx = "Velocyto/raw/unspliced.mtx",
+                       cells = "Velocyto/raw/barcodes.tsv",
+                       features = "Velocyto/raw/features.tsv")
+  unspliced@Dimnames[[2]] <- paste(seuratobject,unspliced@Dimnames[[2]],sep = "_")
+  unspliced <- unspliced[,which(unspliced@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
+  ambiguous <- ReadMtx(mtx = "Velocyto/raw/ambiguous.mtx",
+                       cells = "Velocyto/raw/barcodes.tsv",
+                       features = "Velocyto/raw/features.tsv")
+  ambiguous@Dimnames[[2]] <- paste(seuratobject,ambiguous@Dimnames[[2]],sep = "_")
+  ambiguous <- ambiguous[,which(ambiguous@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
+  Velocyto <- list(spliced,unspliced,ambiguous)
+  names(Velocyto)[[1]] <- "spliced"
+  names(Velocyto)[[2]] <- "unspliced"
+  names(Velocyto)[[3]] <- "ambiguous"
+  Velocyto
+}
+
+#####################################
+## Stacked Vlnplot for global UMAP ##
+#####################################
+JS_stackedviolin <- function(seuratobject,gene_ids,gene_names){
+  VlnPlot <- VlnPlot(seuratobject,features = gene_ids,slot = "data",assay = "RNA", stack = T,flip = T,same.y.lims = T,split.plot = F, fill.by = "ident")+
+    scale_y_discrete(breaks = gene_ids, labels = gene_names) +
+    theme(legend.position="right",
+        legend.key.size=unit(2,"line"),
+        legend.text=element_text(size=22),
+        legend.title = element_text(size=14),
+        axis.line=element_line(colour="black",size=1.25, linetype="solid"),
+        axis.text.x = element_text(angle = 45, hjust=1,vjust = 1,size = 18),
+        axis.text.y = element_text(angle = 0, hjust=0.5,vjust = 0.3,size = 20),
+        strip.text = element_text(size=20,face = "italic",),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.ticks.length=unit(0.3,"cm"))
+  levels(VlnPlot$data$feature) <- toupper(gene_names)
+  VlnPlot+NoLegend()
+}
+
+########################################
+# Expression level of top markers (p<0.1) #
+########################################
+JS_expressiontable <- function(seuratobject,seuratobject_markers,p.val.thresh = 0.05, logfc.thresh = 0.5){
+  expressiontable <- AverageExpression(seuratobject,features = seuratobject_markers$gene)
+  expressiontable <- expressiontable$RNA
+  expressiontable <- as.data.frame(expressiontable) 
+  expressiontable$gene <- row.names(expressiontable) 
+  expressiontable <- full_join(seuratobject_markers,expressiontable,by="gene")
+  expressiontable <- expressiontable %>%
+  filter(p_val_adj < p.val.thresh, abs(avg_log2FC) > logfc.thresh)
+  return(expressiontable)
+}
+
+########################################
+# multifeatureplot #
+########################################
+JS_multifeatureplot <- function(obj,gene_ids, gene_names, ncol = 2, colours = c('lightgrey', 'blue', 'seagreen2'), ...){
+  # Validate inputs
+  if (length(gene_ids) == 0) stop("Please provide at least one gene ID.")
+  if (!is.null(gene_names) && length(gene_ids) != length(gene_names)) {
+    stop("Length of 'gene_ids' and 'gene_names' must be the same if 'gene_names' is provided.")
+  }
+  
+  # Use gene IDs as titles if gene_names is not provided
+  if (is.null(gene_names)) gene_names <- gene_ids
+  
+  ps <- list()
+  minimal<- min(obj[['RNA']]@data[gene_ids, ])
+  maximal<- max(obj[['RNA']]@data[gene_ids, ])
+  for (i in 1:length(gene_ids)) {
+    p <- FeaturePlot(obj, features = gene_ids[i], label = F, cols = colours, ...) +
+      theme(panel.border = element_rect(fill=NA,color="black", size=1, linetype="solid"))+
+      ggtitle(gene_names[i],) +
+      theme(plot.title = element_text(size = 20, face = "italic"),
+            axis.title = element_blank(),
+            axis.text = element_blank(),
+            axis.line = element_blank(),
+            axis.ticks = element_blank())
+    ps[[i]]<- p
+  }
+  grid.arrange(do.call("arrangeGrob", c(ps, ncol = ncol)))
+}
+```
