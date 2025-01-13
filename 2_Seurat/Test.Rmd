@@ -1,0 +1,134 @@
+---
+title: "Test"
+output: html_document
+date: "2023-08-08"
+---
+# This script includ some code for testing
+```{r Split UMAP plots based on orig.ident}
+#### Separate UMAP plots based on orig.ident####
+umap_plots <- lapply(unique(umap_data$orig_ident), function(ident) {
+  data_subset <- subset(umap_data, orig_ident == ident)
+  ggplot(data_subset, aes(x = UMAP_1, y = UMAP_2, fill = cell_type)) +
+    geom_point(size = 1.5, colour = "grey35", shape = 21) +
+    ggtitle(ident)+
+    theme_void() + 
+    theme(legend.position = "none",
+          panel.background = element_rect(fill = "transparent", colour = NA),
+          plot.background = element_rect(fill = "transparent", colour = NA),
+          legend.background = element_rect(fill = "transparent", colour = NA),
+          legend.box.background = element_rect(fill = "transparent", colour = NA))+
+    scale_fill_manual(values = Colour_palette) +
+    labs(x = '', y = '')
+})
+UMAP_global_split <- UMAPPlot(chicken.organoid,split.by = "orig.ident")
+
+UMAP_global_split <- grid.arrange(do.call("arrangeGrob", c(umap_plots, ncol=4)))
+
+umap_plots <- lapply(unique(chicken.organoid$orig.ident), function(ident) {
+  data_subset <- subset(chicken.organoid, orig.ident == ident)
+  UMAPPlot(data_subset,label=F)+labs(x = '', y = '')
+})
+```
+```{r Epithelial_vlnplot}
+genes <- c("ENSGALG00015014947","SLC15A1","PRAP1","APOA4","VIL1","KRT40","ANPEP","FABP2","APOA1",
+           "UCN3","TPH1","NEUROD1","ENSGALG00015022117","ENSGALG00015000968","ENSGALG00015015312","ENSGALG00015016059",
+           "COL5A1","COL6A3","COL1A2",
+           "BCAS1","TFF3","ENSGALG00015004731","ENSGALG00015021682","TSPAN13",
+           "AvBD10","CD24","MMP7",
+           "CENPF","ENSGALG00015010483","SMC2",
+           "DCLK1","ALOX5AP","GFI1B","RGS13","FYB1","IRAG2","ENSGALG00015021519","ENSGALG00015011641","PTPN6")
+gene_names <- c("ALPI","SLC15A1","PRAP1","APOA4","VIL1","KRT20","ANPEP","FABP2","APOA1",
+                "UCN3","TPH1","NEUROD1","FEV","SCGN","VWA5B2","CHGA",
+                "COL5A1","COL6A3","COL1A2",
+                "BCAS1","TFF3","AGR2","MUC2","TSPAN13",
+                "AvBD10","CD24","MMP7",
+                "CENPF","MKI67","SMC2",
+                "DCLK1","ALOX5AP","GFI1B","RGS13","IRAG2","TRPM5","PLCG2","PTPN6")
+VlnPlot_Epithelial <- JS_stackedviolin(Epithelial_cells,genes,gene_names)
+```
+```{r Epithelial_Dotplot_Colourful}
+DotPlot_Epithelial <- DotPlot(Epithelial_cells,features = c("ENSGALG00015014947","SLC15A1","PRAP1","APOA4","VIL1","KRT40","ANPEP","FABP2","APOA1",
+           "UCN3","TPH1","NEUROD1","ENSGALG00015022117","ENSGALG00015000968","ENSGALG00015015312","ENSGALG00015016059",
+           "BCAS1","TFF3","ENSGALG00015004731","ENSGALG00015021682","TSPAN13",
+           "AvBD10","CD24","MMP7",
+           "OLFM4","LGR5","CENPF","ENSGALG00015010483","SMC2",
+           "DCLK1","ALOX5AP","GFI1B","RGS13","FYB1","IRAG2","ENSGALG00015021519","ENSGALG00015011641","PTPN6"))
+DotPlot_Epithelial <- DotPlot_Epithelial+
+  coord_flip()+
+  scale_color_continuous_c4a_seq('blues',reverse = F)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+DotPlot_Epithelial
+
+a <- DotPlot(Immune,features = c("LAMP1","GZMA","ENSGALG00015005902","ENSGALG00015018112","IL2RA","IL2RB","BLEC2","ENSGALG00015021500","NCAM1","TARP"))
+a <- a+
+  scale_color_continuous_c4a_seq('linear_yl_mg_bu',reverse = F)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r Immune_vlnplot}
+#### Vlnplot-two markers each
+Immune@meta.data$group_order <- factor(Idents(Immune))
+JS_stackedviolin <- function(seuratobject,gene_ids,gene_names){
+  VlnPlot <- VlnPlot(seuratobject,features = gene_ids,slot = "data",assay = "RNA", stack = T,flip = T,same.y.lims = T,split.plot = F, fill.by = "ident")+
+    scale_y_discrete(breaks = gene_ids, labels = gene_names) +
+    theme(legend.position="right",
+        legend.key.size=unit(2,"line"),
+        legend.text=element_text(size=22),
+        legend.title = element_text(size=14),
+        axis.line=element_line(colour="black",size=1.25, linetype="solid"),
+        axis.text.x = element_text(angle = 45, hjust=1,vjust = 1,size = 30),
+        axis.text.y = element_text(angle = 0, hjust=0.5,vjust = 0.3,size = 35),
+        strip.text = element_text(size=28,face = "italic",),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.ticks.length=unit(0.3,"cm"))
+  levels(VlnPlot$data$feature) <- toupper(tolower(gene_names))
+  VlnPlot+NoLegend()
+}
+markers.all <- c("TIMD4","CSF1R","MMR1L4",
+                 "CTSB","TFEC",
+                 "MAFB","SPI1",
+                 "MITF","ZEB2","NFE2L2","PRDM1",
+                 "CCR2","TLR2A","CEBPB",
+                 "CSF3R","CSF2RA","ENSGALG00015009869","LYZ","LGALS2",
+                 "ENSGALG00015021719","HDC",
+                 "CD3D","CD3E",
+                 "CD247","TCF7",
+                 "BCL11B","TARP",
+                 "GNLY")
+names.all <- c("TIMD4","CSF1R","MMR1L4",
+                 "CTSB","TFEC",
+                 "MAFB","SPI1",
+                 "MITF","ZEB2","NFE2L2","PRDM1",
+               "CCR2","TLR2A","CEBPB",
+               "CSF3R","CSF2RA","BPI","LYZ","LGALS2",
+               "CTSG","HDC",
+               "CD3D","CD3E",
+                 "CD3Z","TCF7",
+                 "BCL11B","TARP",
+                 "GNLY")
+VlnPlot_Immune <- JS_stackedviolin(Immune,markers.all,names.all)
+VlnPlot_Immune
+```
+```{r Enrichment_analysis}
+# Analysis the DEGs directly and generate cnetplot  
+genes_to_analyse <- reference$Broiler_id[match(upregulated$gene[upregulated$list_index=="Epithelial 1"],reference$Layer_name)]
+GO_result <- get_go_chicken(genes_to_analyse,universe_genes)
+
+
+enrichGO_Epi1 <- enrichGO(gene = reference$Broiler_id[match(downregulated$gene[downregulated$list_index=="Epithelial 1"],reference$Layer_name)],
+                  ont = "BP",
+                  universe = universe_genes,
+                  OrgDb = org.Ggallus.eg.db,
+                  keyType="GID")
+foldchanges <- upregulated$avg_log2FC
+names(foldchanges) <- reference$Broiler_id[match(downregulated$gene,reference$Layer_name)]
+cnetplot(a, 
+         foldChange=foldchanges, 
+         shadowtext='gene',
+         cex_label_gene=0.75,
+         cex_label_category=2,
+         color_category="purple")     
+
+global <- lapply(Epithelial_cells.markers.list, `[[`, "gene")
+upset_global <- upset(fromList(global),nintersects = 26,nsets = 8,  keep.order = T,text.scale = 3)
+```

@@ -1,0 +1,15 @@
+---
+title: "5_Tables"
+output: html_document
+date: "2023-08-08"
+---
+```{r Tables}
+write.xlsx(reference,"/external1/jianxuan/rds/Gallues.organoid/Tables/reference.xlsx")
+write.xlsx(markers.chicken.organoid,"/external1/jianxuan/rds/Gallues.organoid/Tables/markers.chicken.organoid.xlsx")
+write_xlsx(Mesenchymal_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Mesenchymal_cells_markers.xlsx")
+write_xlsx(Epithelial_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Epithelial_cells_markers.xlsx")
+write_xlsx(Immune_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Immune_markers.xlsx")
+write_xlsx(EECs_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/EECs_markers.xlsx")
+write_xlsx(Endothelial_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Endothelial_cells_markers.xlsx")
+write_xlsx(Neuron_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Neuron_cells_markers.xlsx")
+```

@@ -1,0 +1,305 @@
+---
+title: "3_Analysis"
+output: html_document
+date: "2023-08-08"
+---
+```{r subset_Mesenchymal}
+Mesenchymal_cells <- subset(chicken.organoid,idents=c("Mesenchymal cells"))
+Mesenchymal_cells <- JS_scaling(Mesenchymal_cells)
+UMAPPlot(Mesenchymal_cells,label = T)
+
+Mesenchymal_cells <- StashIdent(Mesenchymal_cells, save.name = 'idents')
+current.cluster.ids <- c(0:22)
+Mesenchymal_cells.cluster.ids <-  c("Mesen 1","Mesen 3","Mesen 1","Mesen 2","Mesen 1","Mesen 4",
+                              "Mesen 1","Mesen 7","Mesen 7","Mesen 1","Mesen 1",
+                              "Mesen 5","Mesen 7","Mesen 7","Mesen 6","Mesen 3",
+                              "Mesen 8","Mesen 6","Mesen 5","Mesen 7","Mesen 9",
+                              "Mesen 1","Mesen 6")
+Mesenchymal_cells@active.ident <- plyr::mapvalues(x = Mesenchymal_cells@active.ident, from = current.cluster.ids, to = Mesenchymal_cells.cluster.ids)
+levels(Mesenchymal_cells) <- c("Mesen 1","Mesen 2","Mesen 3","Mesen 4","Mesen 5","Mesen 6","Mesen 7","Mesen 8","Mesen 9")
+UMAPPlot(Mesenchymal_cells,label = T)
+
+# Remove Mesen 9 as Mesenchymal + Epithelial doublets
+Mesenchymal_cells <- subset(Mesenchymal_cells,idents = "Mesen 9",invert=T)
+Mesenchymal_cells <- JS_scaling(Mesenchymal_cells)
+UMAPPlot(Mesenchymal_cells,label = T)
+
+Mesenchymal_cells_markers <- FindAllMarkers(Mesenchymal_cells,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Mesenchymal_cells_markers <- subset(Mesenchymal_cells_markers,p_val_adj<0.05 & avg_log2FC>0.5)
+View(Mesenchymal_cells_markers)
+
+Mesenchymal_cells <- StashIdent(Mesenchymal_cells, save.name = 'idents')
+current.cluster.ids <- c(0:22)
+Mesenchymal_cells.cluster.ids <-  c("Mesen 1","Mesen 3","Mesen 1","Mesen 1","Mesen 2","Mesen 7",
+                              "Mesen 1","Mesen 4","Mesen 1","Mesen 5","Mesen 7",
+                              "Mesen 7","Mesen 7","Mesen 1","Mesen 6","Mesen 7",
+                              "Mesen 3","Mesen 8","Mesen 6","Mesen 5","Mesen 1",
+                              "Mesen 2","Mesen 6")
+Mesenchymal_cells@active.ident <- plyr::mapvalues(x = Mesenchymal_cells@active.ident, from = current.cluster.ids, to = Mesenchymal_cells.cluster.ids)
+levels(Mesenchymal_cells) <- c("Mesen 1","Mesen 2","Mesen 3","Mesen 4","Mesen 5","Mesen 6","Mesen 7","Mesen 8")
+UMAPPlot(Mesenchymal_cells,label = T)
+
+Mesenchymal_cells_markers <- FindAllMarkers(Mesenchymal_cells,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Mesenchymal_cells_markers <- subset(Mesenchymal_cells_markers,p_val_adj<0.05 & avg_log2FC>0.5)
+View(Mesenchymal_cells_markers)
+
+Mesenchymal_cells_markers <- JS_expressiontable(Mesenchymal_cells,Mesenchymal_cells_markers)
+
+write_xlsx(Mesenchymal_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Mesenchymal_cells_markers.xlsx")
+saveRDS(Mesenchymal_cells,paste(savepath,"Mesenchymal_cells.rds",sep =""))
+```
+```{r subset_Epithelial_cells}
+Epithelial_cells <- subset(chicken.organoid,idents=c("Epithelial cells"))
+Epithelial_cells <- JS_scaling(Epithelial_cells)
+UMAPPlot(Epithelial_cells,label = T)
+
+Epithelial_cells <- FindClusters(Epithelial_cells,resolution = 0.5)
+UMAPPlot(Epithelial_cells,label = T)
+
+Epithelial_cells_markers <- FindAllMarkers(Epithelial_cells,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Epithelial_cells_markers <- subset(Epithelial_cells_markers,p_val_adj<0.05)
+View(Epithelial_cells_markers)
+
+# Remove 6 as Mesenchymal + Epithelial doublets
+# Remove 14 as Neuron + Epithelial doublets
+Epithelial_cells <- subset(Epithelial_cells,idents = c(6,14),invert=T)
+Epithelial_cells <- JS_scaling(Epithelial_cells)
+UMAPPlot(Epithelial_cells,label = T)
+
+Epithelial_cells <- FindClusters(Epithelial_cells,resolution = 0.5)
+UMAPPlot(Epithelial_cells,label = T)
+
+Epithelial_cells <- StashIdent(Epithelial_cells, save.name = 'idents')
+current.cluster.ids <- c(0:13)
+Epithelial_cells.cluster.ids <-  c("Epithelial 1","Epithelial 1","Epithelial 1","Epithelial 1","Epithelial 1","Epithelial 3",
+                              "Epithelial 1","Epithelial 1","Epithelial 2","Epithelial 4","Epithelial 5",
+                              "Epithelial 2","Epithelial 2","Epithelial 6")
+Epithelial_cells@active.ident <- plyr::mapvalues(x = Epithelial_cells@active.ident, from = current.cluster.ids, to = Epithelial_cells.cluster.ids)
+levels(Epithelial_cells) <- c("Epithelial 1","Epithelial 2","Epithelial 3","Epithelial 4","Epithelial 5","Epithelial 6","Epithelial 7")
+UMAPPlot(Epithelial_cells,label = T)
+
+Epithelial_cells_markers <- FindAllMarkers(Epithelial_cells,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Epithelial_cells_markers <- subset(Epithelial_cells_markers,p_val_adj<0.05 & avg_log2FC>0.5)
+View(Epithelial_cells_markers)
+
+Epithelial_cells_markers <- JS_expressiontable(Epithelial_cells,Epithelial_cells_markers)
+write_xlsx(Epithelial_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Epithelial_cells_markers.xlsx")
+saveRDS(Epithelial_cells,paste(savepath,"Epithelial_cells.rds",sep =""))
+```
+```{r subset_Immune}
+Immune <- subset(chicken.organoid,idents="Immune cells")
+Immune <- JS_scaling(Immune)
+UMAPPlot(Immune,label = T)
+
+Immune_markers <- FindAllMarkers(Immune,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Immune_markers <- subset(Immune_markers,p_val_adj<0.05 & avg_log2FC>0.5)
+View(Immune_markers)
+
+Immune <- StashIdent(Immune, save.name = 'idents')
+current.cluster.ids <- c(0:9)
+Immune.cluster.ids <-  c("Immune 1","Immune 3","Immune 1","Immune 6","Immune 1","Immune 2",
+                                   "Immune 4","Immune 1","Immune 5","Immune 6")
+Immune@active.ident <- plyr::mapvalues(x = Immune@active.ident, from = current.cluster.ids, to = Immune.cluster.ids)
+levels(Immune) <- c("Immune 1","Immune 2","Immune 3","Immune 4","Immune 5","Immune 6")
+UMAPPlot(Immune,label = T)
+
+# Remove Iummune 4 as Mesenchymal + Immune doublets
+Immune <- subset(Immune,idents = "Immune 4",invert=T)
+Immune <- JS_scaling(Immune)
+UMAPPlot(Immune,label = T)
+
+Immune <- StashIdent(Immune, save.name = 'idents')
+current.cluster.ids <- c(0:8)
+Immune.cluster.ids <-  c("Immune 1","Immune 3","Immune 1","Immune 2","Immune 5","Immune 2",
+                                   "Immune 1","Immune 4","Immune 5")
+Immune@active.ident <- plyr::mapvalues(x = Immune@active.ident, from = current.cluster.ids, to = Immune.cluster.ids)
+levels(Immune) <- c("Immune 1","Immune 2","Immune 3","Immune 4","Immune 5")
+UMAPPlot(Immune,label = T)
+
+Immune_markers <- FindAllMarkers(Immune,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Immune_markers <- subset(Immune_markers,p_val_adj<0.05 & avg_log2FC>0.5)
+View(Immune_markers)
+
+Immune_markers <- JS_expressiontable(Immune,Immune_markers)
+
+write_xlsx(Immune_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Immune_markers.xlsx")
+saveRDS(Immune,paste(savepath,"Immune.rds",sep =""))
+```
+```{r subset_EECs}
+EECs <- subset(Epithelial_cells,idents=c("Epithelial 2"))
+EECs <- JS_scaling(EECs)
+UMAPPlot(EECs,label = T)
+
+EECs <- FindClusters(EECs,resolution = 8)
+UMAPPlot(EECs,label = T)
+
+EECs_markers <- FindAllMarkers(EECs,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+EECs_markers <- subset(EECs_markers,p_val_adj<0.05 & avg_log2FC>0.5)
+View(EECs_markers)
+EECs <- StashIdent(EECs, save.name = 'idents')
+current.cluster.ids <- c(0:31)
+EECs.cluster.ids <-  c("EEC 9","EEC 1","EEC 9","EEC 1","EEC 5","EEC 13",
+                  "EEC 2","EEC 2","EEC 1","EEC 6","EEC 1",
+                  "EEC 1","EEC 11","EEC 1","EEC 2","EEC 13",
+                  "EEC 8","EEC 1","EEC 1","EEC 6","EEC 9",
+                  "EEC 2","EEC 9","EEC 4","EEC 12","EEC 1",
+                  "EEC 10","EEC 1","EEC 7","EEC 9","EEC 1",
+                  "EEC 9")
+EECs@active.ident <- plyr::mapvalues(x = EECs@active.ident, from = current.cluster.ids, to = EECs.cluster.ids)
+UMAPPlot(EECs,label = T)
+
+# Remove EEC 9 as Mesenchymal + EEC doublets
+EECs <- subset(EECs,idents=c("EEC 9"),invert =T)
+EECs <- JS_scaling(EECs)
+UMAPPlot(EECs,label = T)
+
+EECs <- FindClusters(EECs,resolution = 4)
+UMAPPlot(EECs,label = T)
+
+EECs <- StashIdent(EECs, save.name = 'idents')
+current.cluster.ids <- c(0:19)
+EECs.cluster.ids <-  c("EEC 2","EEC 1","EEC 1","EEC 1","EEC 10","EEC 1",
+                  "EEC 1","EEC 1","EEC 5","EEC 4","EEC 7",
+                  "EEC 4","EEC 9","EEC 3","EEC 6","EEC 2",
+                  "EEC 6","EEC 2","EEC 8","EEC 10")
+
+EECs@active.ident <- plyr::mapvalues(x = EECs@active.ident, from = current.cluster.ids, to = EECs.cluster.ids)
+levels(EECs) <- c("EEC 1","EEC 2","EEC 3","EEC 4","EEC 5","EEC 6",
+                  "EEC 7","EEC 8","EEC 9","EEC 10")
+UMAPPlot(EECs,label = T)
+
+
+genes <- c("CDH19","MEGF10","SOX10","PLP1","ERBB3","RET","ELAVL4","S100B","CRYAB","RXRG","NTRK2","MBP",
+           "MMP2","MGP","ENSGALG00015010483","KIF20A","PRC1","BUB1B")
+gene_names <- c("CDH19","MEGF10","SOX10","PLP1","ERBB3","RET","ELAVL4","S100B","CRYAB","RXRG","NTRK2","MBP",
+                "MMP2","MGP","MKI67","KIF20A","PRC1","BUB1B")
+JS_stackedviolin(Epithelial_cells,genes,gene_names)
+
+EECs_markers <- JS_expressiontable(EECs,EECs_markers)
+write_xlsx(EECs_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/EECs_markers.xlsx")
+saveRDS(EECs,paste(savepath,"EECs.rds",sep =""))
+```
+```{r subset_Endothelial_cells}
+Endothelial_cells <- subset(chicken.organoid,idents=c("Endothelial cells"))
+Endothelial_cells <- JS_scaling(Endothelial_cells)
+UMAPPlot(Endothelial_cells,label = T)
+
+Endothelial_cells <- StashIdent(Endothelial_cells, save.name = 'idents')
+current.cluster.ids <- c(0:7)
+Endothelial.cluster.ids <-  c("Endothelial 1","Endothelial 1","Endothelial 1","Endothelial 2","Endothelial 3","Endothelial 4",
+                                   "Endothelial 5","Endothelial 6")
+Endothelial_cells@active.ident <- plyr::mapvalues(x = Endothelial_cells@active.ident, from = current.cluster.ids, to = Endothelial.cluster.ids)
+UMAPPlot(Endothelial_cells,label = T)
+
+Endothelial_cells_markers <- FindAllMarkers(Endothelial_cells,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Endothelial_cells_markers <- subset(Endothelial_cells_markers,p_val_adj<0.05)
+View(Endothelial_cells_markers)
+
+Endothelial_cells_markers <- JS_expressiontable(Endothelial_cells,Endothelial_cells_markers)
+write_xlsx(Endothelial_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Endothelial_cells_markers.xlsx")
+saveRDS(Endothelial_cells,paste(savepath,"Endothelial_cells.rds",sep =""))
+```
+```{r subset_Neuronal_cells}
+Neuron_cells <- subset(chicken.organoid,idents=c("Neuron cells"))
+Neuron_cells <- JS_scaling(Neuron_cells)
+UMAPPlot(Neuron_cells,label = T)
+
+Neuron_cells <- StashIdent(Neuron_cells, save.name = 'idents')
+current.cluster.ids <- c(0:4)
+Neuron.cluster.ids <-  c("Neuron 1","Neuron 2","Neuron 3","Neuron 4","Neuron 5")
+Neuron_cells@active.ident <- plyr::mapvalues(x = Neuron_cells@active.ident, from = current.cluster.ids, to = Neuron.cluster.ids)
+UMAPPlot(Neuron_cells,label = T)
+
+Neuron_cells_markers <- FindAllMarkers(Neuron_cells,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5)
+Neuron_cells_markers <- subset(Neuron_cells_markers,p_val_adj<0.05)
+View(Neuron_cells_markers)
+
+Neuron_cells_markers <- JS_expressiontable(Neuron_cells,Neuron_cells_markers)
+write_xlsx(Neuron_cells_markers,"/external1/jianxuan/rds/Gallues.organoid/Tables/Neuron_cells_markers.xlsx")
+saveRDS(Neuron_cells,paste(savepath,"Neuron_cells.rds",sep =""))
+```
+```{r D3 broiler vs layer}
+Input_seurat_object <- Epithelial_cells
+
+# p value and log2fc threshold
+p.val.thresh <- 0.05
+logfc.thresh <- 0.5
+
+# Setup for different comparision
+# Comparision between timepoint and breeds were included not in the final work
+Condition <- Input_seurat_object@meta.data$orig.ident
+chicken.Input_seurat_object.ids <- levels(Idents(Input_seurat_object))
+Condition[Condition %in% c("adj.LV_1", "adj.LV_2")] <- "D0_Broiler"
+Condition[Condition %in% c("adj.LV_3", "adj.LV_4")] <- "D0_Layer"
+Condition[Condition %in% c("adj.LV_5", "adj.LV_6")] <- "D3_Broiler"
+Condition[Condition %in% c("adj.LV_7", "adj.LV_8")] <- "D3_Layer"
+
+## Input_seurat_object$condition <- paste(Condition)
+## Timepoint <- Input_seurat_object@meta.data$orig.ident
+## Input_seurat_object.ids <- levels(Idents(Input_seurat_object))
+## Timepoint[Timepoint %in% c("adj.LV_1", "adj.LV_2", "adj.LV_3", "adj.LV_4")] <- "D0"
+## Timepoint[Timepoint %in% c("adj.LV_5", "adj.LV_6", "adj.LV_7", "adj.LV_8")] <- "D3"
+
+## Breeds <- Input_seurat_object@meta.data$orig.ident
+## Input_seurat_object.ids <- levels(Idents(Input_seurat_object))
+## Breeds[Breeds %in% c("adj.LV_1", "adj.LV_2", "adj.LV_5", "adj.LV_6")] <- "Broiler"
+## Breeds[Breeds %in% c("adj.LV_3", "adj.LV_4", "adj.LV_7", "adj.LV_8")] <- "Layer"
+
+Input_seurat_object.cluster.ids <- unique(Input_seurat_object@active.ident)
+Input_seurat_object@meta.data$D3_broiler_vs_layer <- paste(Input_seurat_object@active.ident,Timepoint,Breeds,sep = "_")
+Idents(Input_seurat_object) <- Input_seurat_object@meta.data$D3_broiler_vs_layer
+
+# Genes changed between control and infection
+Input_seurat_object.cluster.ids.broiler <- paste(Input_seurat_object.cluster.ids, "D3","Broiler", sep = "_", collapse = NULL)
+Input_seurat_object.cluster.ids.layer <- paste(Input_seurat_object.cluster.ids, "D3","Layer", sep = "_", collapse = NULL)
+Input_seurat_object.cluster.ids.df <- data.frame(Input_seurat_object.cluster.ids, Input_seurat_object.cluster.ids.broiler, Input_seurat_object.cluster.ids.layer)
+Input_seurat_object.markers.list <- list()
+for (i in 1:length(Input_seurat_object.cluster.ids)) {
+  Input_seurat_object.markers.list[[i]] = FindMarkers(Input_seurat_object,verbose = TRUE,
+                                         ident.1 = Input_seurat_object.cluster.ids.df$Input_seurat_object.cluster.ids.broiler[i],
+                                         ident.2 = Input_seurat_object.cluster.ids.df$Input_seurat_object.cluster.ids.layer[i])
+  Input_seurat_object.markers.list[[i]] <- Input_seurat_object.markers.list[[i]][Input_seurat_object.markers.list[[i]]$p_val_adj<= p.val.thresh,]
+  Input_seurat_object.markers.list[[i]]$gene <- rownames(Input_seurat_object.markers.list[[i]])
+  names(Input_seurat_object.markers.list)[[i]] <- paste(Input_seurat_object.cluster.ids[i])
+}
+
+DEGs <- lapply(Input_seurat_object.markers.list, `[[`, "gene")
+UpSetR::upset(fromList(DEGs),nintersects = 26,nsets = 8)
+
+# Saved the DEGs into 3 different excel sheet - all, upregulated and downregulated 
+dir.create("/external1/jianxuan/rds/Gallues.organoid/Tables/D3_Broiler_VS_Layer")
+savepath <- "/external1/jianxuan/rds/Gallues.organoid/Tables/D3_Broiler_VS_Layer/"
+Input_seurat_object.markers.listup <- list()
+Input_seurat_object.markers.listdown <- list()
+for (i in 1:length(Input_seurat_object.cluster.ids)) {
+  Input_seurat_object.markers.listup[[i]] <- subset(Input_seurat_object.markers.list[[i]],Input_seurat_object.markers.list[[i]][,"avg_log2FC"]>0)
+  Input_seurat_object.markers.listdown[[i]] <- subset(Input_seurat_object.markers.list[[i]],Input_seurat_object.markers.list[[i]][,"avg_log2FC"]<0)
+  names(Input_seurat_object.markers.listdown)[[i]] <- paste(Input_seurat_object.cluster.ids[i])
+  names(Input_seurat_object.markers.listup)[[i]] <- paste(Input_seurat_object.cluster.ids[i])
+}
+comparision <- bind_rows(map2(Input_seurat_object.markers.list, names(Input_seurat_object.markers.list), ~mutate(.x, list_index = .y)))
+upregulated <- bind_rows(map2(Input_seurat_object.markers.listup, names(Input_seurat_object.markers.listup), ~mutate(.x, list_index = .y)))
+downregulated <- bind_rows(map2(Input_seurat_object.markers.listdown, names(Input_seurat_object.markers.listdown), ~mutate(.x, list_index = .y)))
+write.xlsx(comparision,paste(savepath,"comparision.xlsx",sep=""))
+write.xlsx(upregulated,paste(savepath,"upregulated.xlsx",sep=""))
+write.xlsx(downregulated,paste(savepath,"downregulated.xlsx",sep=""))
+```
+```{r Enrichment analysis}
+# BP for Biological Process, MF for Molecular Function, and CC for Cellular Component
+# Set the background to all genes expressed in epithelial cells
+universe_genes <-  reference$Broiler_id[match(rownames(Epithelial_cells@assays$RNA@data)[rowSums(Epithelial_cells@assays$RNA@data) > 0],reference$Layer_name)]
+
+# Use compareCluster to analysis the DEGs between D3 broiler and layer
+# This was done in all epithelial subpopulations
+comparelist <- list(reference$Broiler_id[match(upregulated$gene[upregulated$list_index=="Epithelial 1"],reference$Layer_name)],
+                  reference$Broiler_id[match(downregulated$gene[downregulated$list_index=="Epithelial 1"],reference$Layer_name)])
+names(comparelist) <- c("Broiler up-regulated","Layer up-regulated") 
+CompareCluster_Epi1 <- compareCluster(geneCluster = comparelist, 
+               fun = enrichGO,
+               universe = universe_genes,
+               OrgDb= org.Ggallus.eg.db,
+               keyType = "GID",
+               ont= "BP")
+GO_Epi1 <- dotplot(CompareCluster_Epi1,showCategory=10,title='Top 10 GO terms of Enterocytes') + scale_size_area(max_size = 20)
+write.xlsx(CompareCluster_Epi1@compareClusterResult,"/external1/jianxuan/CompareCluster_Epi.xlsx")
+```

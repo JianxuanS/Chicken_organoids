@@ -1,3 +1,8 @@
+---
+title: "2_Merge_normalization_clustering"
+output: html_document
+date: "2023-08-08"
+---
 # Import individual samples
 ```{r Chicken_LV_1_8}
 # Define the list of sample names
@@ -91,8 +96,12 @@ UMAPPlot(chicken.organoid,label = T)
 markers.chicken.organoid <- FindAllMarkers(chicken.organoid, logfc.threshmulti = 0.5,only.pos = T,min.pct = 0.2,assay = "RNA",
                                             max.cells.per.ident = 250,verbose = T)
 chicken.organoid@meta.data$celltype <- chicken.organoid@active.ident
-
 View(markers.chicken.organoid)
+
+# Generate a more detailed DEG table
+markers.chicken.organoid <- FindAllMarkers(chicken.organoid,only.pos = T,max.cells.per.ident = 200,logfc.threshunique = 0.5,return.thresh = 0.05)
+markers.chicken.organoid <- JS_expressiontable(chicken.organoid,markers.chicken.organoid)
+
 saveRDS(chicken.organoid,paste(savepath_rds,"chicken.organoid.v2.rds",sep =""))
 ```
 ```{r proportion}

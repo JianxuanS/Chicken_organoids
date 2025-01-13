@@ -1,12 +1,9 @@
 ---
-title: "Chicken.Organoid"
+title: "1_Preprocessing_for_individual_samples"
 output: html_document
 date: "2023-08-08"
 ---
-
-```{r setup}
-knitr::opts_chunk$set(echo = TRUE)
-
+```{r Setup}
 library(BiocManager)
 library(devtools)
 library(biomaRt)
@@ -206,25 +203,25 @@ JS_piechart <- function(orig.ident, title){
 #### Creating Piegraph functions ####
 #####################################
 # Not in use
-JS_piegraph <- function(seuratobject){
-  a <- table(Idents(seuratobject), seuratobject$orig.ident) %>%
-    as.data.frame() %>%
-    dplyr::rename(cell.types=Var1, orig.ident=Var2, numbers=Freq)
-  b <- list()
-  c <- c("adj.as18","adj.as20","adj.pbs3","adj.pbs6")
-  for (i in 1:length(c)) {
-    b[[i]] <- subset(a, orig.ident == c[[i]]) %>%
-      mutate(Percentage = numbers/sum(numbers) * 100) %>%
-      mutate_if(is.numeric, round)
-  }
-  d <- list()
-  for (i in 1:length(c)) {
-    d[[i]] <- JS_piechart(b[[i]], title = c[[i]])
-  }
-  e <- ggarrange(d[[1]],d[[2]],d[[3]],d[[4]],
-                 ncol = 2, nrow = 2)
-  e
-}
+## JS_piegraph <- function(seuratobject){
+##   a <- table(Idents(seuratobject), seuratobject$orig.ident) %>%
+##     as.data.frame() %>%
+##     dplyr::rename(cell.types=Var1, orig.ident=Var2, numbers=Freq)
+##   b <- list()
+##   c <- c("adj.as18","adj.as20","adj.pbs3","adj.pbs6")
+##   for (i in 1:length(c)) {
+##     b[[i]] <- subset(a, orig.ident == c[[i]]) %>%
+##       mutate(Percentage = numbers/sum(numbers) * 100) %>%
+##       mutate_if(is.numeric, round)
+##   }
+##   d <- list()
+##   for (i in 1:length(c)) {
+##     d[[i]] <- JS_piechart(b[[i]], title = c[[i]])
+##   }
+##   e <- ggarrange(d[[1]],d[[2]],d[[3]],d[[4]],
+##                  ncol = 2, nrow = 2)
+##   e
+## }
 
 #####################################
 #### Calculate cell type proportion ####
@@ -249,29 +246,29 @@ JS_cell_type_proportions <- function(Input_seurat_object, orig_idents) {
 ######## Read Velocyto data #########
 #####################################
 # Not in use
-JS_readVelocyto <- function(seuratobject,filepath,matchobject){
-  setwd(filepath)
-  spliced <- ReadMtx(mtx = "Velocyto/raw/spliced.mtx",
-                     cells = "Velocyto/raw/barcodes.tsv",
-                     features = "Velocyto/raw/features.tsv")
-  spliced@Dimnames[[2]] <- paste(seuratobject,spliced@Dimnames[[2]],sep = "_")
-  spliced <- spliced[,which(spliced@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
-  unspliced <- ReadMtx(mtx = "Velocyto/raw/unspliced.mtx",
-                       cells = "Velocyto/raw/barcodes.tsv",
-                       features = "Velocyto/raw/features.tsv")
-  unspliced@Dimnames[[2]] <- paste(seuratobject,unspliced@Dimnames[[2]],sep = "_")
-  unspliced <- unspliced[,which(unspliced@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
-  ambiguous <- ReadMtx(mtx = "Velocyto/raw/ambiguous.mtx",
-                       cells = "Velocyto/raw/barcodes.tsv",
-                       features = "Velocyto/raw/features.tsv")
-  ambiguous@Dimnames[[2]] <- paste(seuratobject,ambiguous@Dimnames[[2]],sep = "_")
-  ambiguous <- ambiguous[,which(ambiguous@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
-  Velocyto <- list(spliced,unspliced,ambiguous)
-  names(Velocyto)[[1]] <- "spliced"
-  names(Velocyto)[[2]] <- "unspliced"
-  names(Velocyto)[[3]] <- "ambiguous"
-  Velocyto
-}
+## JS_readVelocyto <- function(seuratobject,filepath,matchobject){
+##   setwd(filepath)
+##   spliced <- ReadMtx(mtx = "Velocyto/raw/spliced.mtx",
+##                      cells = "Velocyto/raw/barcodes.tsv",
+##                      features = "Velocyto/raw/features.tsv")
+##   spliced@Dimnames[[2]] <- paste(seuratobject,spliced@Dimnames[[2]],sep = "_")
+##   spliced <- spliced[,which(spliced@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
+##   unspliced <- ReadMtx(mtx = "Velocyto/raw/unspliced.mtx",
+##                        cells = "Velocyto/raw/barcodes.tsv",
+##                        features = "Velocyto/raw/features.tsv")
+##   unspliced@Dimnames[[2]] <- paste(seuratobject,unspliced@Dimnames[[2]],sep = "_")
+##   unspliced <- unspliced[,which(unspliced@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
+##   ambiguous <- ReadMtx(mtx = "Velocyto/raw/ambiguous.mtx",
+##                        cells = "Velocyto/raw/barcodes.tsv",
+##                        features = "Velocyto/raw/features.tsv")
+##   ambiguous@Dimnames[[2]] <- paste(seuratobject,ambiguous@Dimnames[[2]],sep = "_")
+##   ambiguous <- ambiguous[,which(ambiguous@Dimnames[[2]] %in% matchobject@assays$RNA@counts@Dimnames[[2]])]
+##   Velocyto <- list(spliced,unspliced,ambiguous)
+##   names(Velocyto)[[1]] <- "spliced"
+##   names(Velocyto)[[2]] <- "unspliced"
+##   names(Velocyto)[[3]] <- "ambiguous"
+##   Velocyto
+## }
 
 #####################################
 ## Stacked Vlnplot for global UMAP ##
@@ -309,7 +306,7 @@ JS_expressiontable <- function(seuratobject,seuratobject_markers,p.val.thresh = 
 }
 
 ########################################
-# multifeatureplot #
+# Multifeatureplot #
 ########################################
 JS_multifeatureplot <- function(obj,gene_ids, gene_names, ncol = 2, colours = c('lightgrey', 'blue', 'seagreen2'), ...){
   # Validate inputs
@@ -337,4 +334,31 @@ JS_multifeatureplot <- function(obj,gene_ids, gene_names, ncol = 2, colours = c(
   }
   grid.arrange(do.call("arrangeGrob", c(ps, ncol = ncol)))
 }
+
+########################################
+#### Generate GO result for chicken ####
+########################################
+get_go_chicken <- function(genes_to_analyse, universe_genes) { 
+  res <- enrichGO(gene = genes_to_analyse,
+                  ont = "ALL",
+                  universe = universe_genes,
+                  OrgDb = org.Ggallus.eg.db,
+                  keyType="GID")
+  enrichplot::dotplot(res,title='Top 10 GO terms of each sub-class',
+                      showCategory=10,split='ONTOLOGY')+ 
+    facet_grid(ONTOLOGY~.,scale="free")
+  }
+```
+```{r reference_table}
+# Generate layer - broiler reference table to get the GO information for layer genome
+# Use the result from Chicken_breed_homologies.sh
+reference <- read.table("/external1/jianxuan/broiler_homologies_columns_567.tsv")
+chicken_annotation <- read.table("/external1/jianxuan/final_chicken_annotation_table.tsv")
+colnames(reference) <- c("Broiler_id","Broiler_name","Layer_id")
+for (i in 1:nrow(reference)){
+  if (startsWith(reference[i, "Broiler_name"], "ENSG")) {
+    reference[i, "Broiler_name"] <- reference[i, "Broiler_id"]
+  }
+}
+reference$Layer_name <- chicken_annotation$V2[match(reference$Layer_id,chicken_annotation$V1)]
 ```

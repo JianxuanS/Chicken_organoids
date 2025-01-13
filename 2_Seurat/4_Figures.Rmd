@@ -1,0 +1,479 @@
+---
+title: "4_Figures"
+output: html_document
+date: "2023-08-08"
+---
+```{r Figure2_Global}
+# Global UMAP
+UMAP_global <- UMAPPlot(chicken.organoid,label=T)
+
+# Barplot
+dittoBarPlot_chicken.organoid <- dittoBarPlot(chicken.organoid, 
+              var = "orig.ident", 
+              group.by = "ident",
+              color.panel = c("#FFFFFF","#FFFFFF","#808080","#808080","#FFFFFF","#FFFFFF","#808080","#808080"),
+              x.reorder = c(1,2,3,4,5))+
+  geom_bar_pattern(stat="identity", pattern_fill = "black",colour = "black", pattern_spacing = 0.03,pattern_density = 0.1,pattern_size=0.7,
+                   pattern= rep(c(rep("none", 4), rep("circle", 4)), 5))+
+  scale_y_continuous(labels = percent) +
+  theme(legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 12),
+    axis.ticks.x = element_blank(),
+    plot.title = element_blank(),
+    axis.line.x.bottom = element_blank(),
+    panel.grid = element_blank(),
+    panel.background = element_blank())
+
+dittoBarPlot_chicken.organoid
+cluster_info <- Idents(chicken.organoid)
+cell_counts <- as.data.frame(table(cluster_info))
+# Create a barplot using ggplot2
+barplot_clusters <- ggplot(cell_counts, aes(x = cluster_info, y = Freq, fill = cluster_info)) +
+    geom_bar(stat = "identity",color = "black") +
+    geom_text(aes(label = Freq), vjust = -0.5)+
+    scale_fill_manual(values = hue_pal()(5))+
+    theme(legend.position = "none",
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(size = 12,angle = 90,vjust = 0.5,hjust = 1),
+          axis.text.y = element_text(size = 12),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_line(),
+          axis.line.y.left = element_line(),
+          plot.title = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.background = element_blank())
+barplot_clusters
+# Grid these two plots
+Temporary <- list(dittoBarPlot_chicken.organoid, barplot_clusters)
+BarPlot_chicken.organoid <- plot_grid(plotlist = Temporary, ncol=1, align='v')
+BarPlot_chicken.organoid
+
+# Vlnplot
+gene_ids <- c("DCN","COL1A2","ACTA2",
+              "KRT7","EZR","EPCAM",
+              "CDH5","VWF","ENSGALG00015026320",
+              "PTPRC","CSF1R","RUNX3",
+              "CDH19","SOX10","ENSGALG00015009189")
+gene_names <- c("DCN","COL1A2","ACTA2",
+                "KRT7","EZR","EPCAM",
+                "CDH5","VWF","PECAM1",
+                "PTPRC","CSF1R","RUNX3",
+                "CDH19","SOX10","MAP2")
+JS_multifeatureplot(chicken.organoid,gene_ids,gene_names)
+Vlnplot_global <- JS_stackedviolin(chicken.organoid,gene_ids,gene_names)
+
+# Heatmap of top20 DE genes####
+Heatmap_global <- JS_heatmap(chicken.organoid,markers.chicken.organoid)
+Heatmap_global
+
+ggsave(plot = UMAP_global,"UMAP_global.svg",path=savepath_figure, width = 9, height = 7, units = "in")
+ggsave(plot = Heatmap_global,"Heatmap_global.svg",path = savepath_figure, width = 20, height = 22, units = "in")
+ggsave(plot = Vlnplot_global,"Vlnplot_global.svg",path=savepath_figure, width = 4, height = 7, units = "in")
+ggsave(plot = BarPlot_chicken.organoid,"BarPlot_chicken.organoid.svg",path = savepath_figure, width = 7, height = 10.5, units = "in")
+```
+```{r Figure3_Mesenchymal}
+# UMAP
+UMAP_Mesenchymal <- UMAPPlot(Mesenchymal_cells,label = T)
+
+# Heatmap of top20 DE genes
+Heatmap_mesenchymal <- JS_heatmap(Mesenchymal_cells,Mesenchymal_cells_markers)
+Heatmap_mesenchymal
+
+# Dotplot
+DotPlot_Mesenchymal <- DotPlot(Mesenchymal_cells,
+                               features = c("COL1A2","DCN","ACTA2",
+                                       "CENPF","ENSGALG00015010483","SMC2",
+                                       "PDGFRA","ENSGALG00015009777","WIF1",
+                                       "HHIP","VIM","MYH11",
+                                       "TAGLN","ENSGALG00015021925",
+                                       "GREM1",
+                                       "EBF1","ENSGALG00015012767","ENSGALG00015021359",
+                                       "ENSGALG00015021440","ETV1","KIT","ENSGALG00015011262"))
+DotPlot_Mesenchymal <- DotPlot_Mesenchymal+
+  coord_flip()+
+  scale_color_continuous_c4a_seq('blues',reverse = F)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+DotPlot_Mesenchymal
+
+# Barplot
+dittoBarPlot_Mesenchymal_cells <- dittoBarPlot(Mesenchymal_cells, 
+              var = "orig.ident", 
+              group.by = "ident",
+              color.panel = c("#FFFFFF","#FFFFFF","#808080","#808080","#FFFFFF","#FFFFFF","#808080","#808080"),
+              x.reorder = c(1,2,3,4,5,6,7,8))+
+  geom_bar_pattern(stat="identity", pattern_fill = "black",colour = "black", pattern_spacing = 0.03,pattern_density = 0.1,pattern_size=0.7,
+                   pattern= rep(c(rep("none", 4), rep("circle", 4)), 8))+
+  scale_y_continuous(labels = percent) +
+  theme(legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 12),
+    axis.ticks.x = element_blank(),
+    plot.title = element_blank(),
+    axis.line.x.bottom = element_blank(),
+    panel.grid = element_blank(),
+    panel.background = element_blank())
+dittoBarPlot_Mesenchymal_cells
+
+cluster_info <- Idents(Mesenchymal_cells)
+cell_counts <- as.data.frame(table(cluster_info))
+# Create a barplot using ggplot2
+barplot_clusters <- ggplot(cell_counts, aes(x = cluster_info, y = Freq, fill = cluster_info)) +
+    geom_bar(stat = "identity",color = "black") +
+    geom_text(aes(label = Freq), vjust = -0.5)+
+    scale_fill_manual(values = hue_pal()(9))+
+    theme(legend.position = "none",
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(size = 12,angle = 90,vjust = 0.5,hjust = 1),
+          axis.text.y = element_text(size = 12),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_line(),
+          axis.line.y.left = element_line(),
+          plot.title = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.background = element_blank())
+barplot_clusters
+# Grid these two plots
+Temporary <- list(dittoBarPlot_Mesenchymal_cells, barplot_clusters)
+BarPlot_Mesenchymal_cells <- plot_grid(plotlist = Temporary, ncol=1, align='v')
+BarPlot_Mesenchymal_cells
+
+# Create the legend using ggplot2 with geom_bar_pattern
+legend_data <- data.frame(
+  category = c("d0 broiler", "d0 layer", "d3 broiler", "d3 layer"),
+  value = rep(1, 4),
+  pattern = c("none", "none", "circle", "circle"),  # "none" = no pattern, "circle" = circle pattern
+  fill = c("#FFFFFF", "#808080", "#FFFFFF", "#808080")  # White for d0, Grey for d3
+)
+legend_plot <- ggplot(legend_data, aes(x = category, y = value, fill = category)) +
+  geom_bar_pattern(stat="identity", aes(pattern = pattern),pattern_fill = "black",colour = "black", pattern_spacing = 0.2,pattern_density = 0.1,pattern_size=3,width = 1,size = 3)+
+  scale_fill_manual(values = c("d0 broiler" = "#FFFFFF", "d0 layer" = "#808080", 
+                               "d3 broiler" = "#FFFFFF", "d3 layer" = "#808080")) +  # Fill colors for bars
+  scale_pattern_manual(values = c("none" = "none", "circle" = "circle")) +  # Pattern types
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom",          
+    legend.title = element_blank(),     
+    legend.text = element_text(size = 12),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.x = element_blank(),
+    plot.title = element_blank(),
+    axis.line.x.bottom = element_blank(),
+    panel.grid = element_blank(),
+    panel.background = element_blank())
+legend_plot
+
+ggsave(plot = legend_plot,"legend_plot.svg",path=savepath, width = 5.38, height = 2.16, units = "px")
+ggsave(plot = UMAP_Mesenchymal,"UMAP_Mesenchymal.svg",path=savepath, width = 10.5, height = 7, units = "in")
+ggsave(plot = DotPlot_Mesenchymal,"DotPlot_Mesenchymal.svg",path=savepath, width = 8.5, height = 8.5, units = "in")
+ggsave(plot = Heatmap_mesenchymal,"Heatmap_mesenchymal.svg",path = savepath, width = 20, height = 22, units = "in")
+ggsave(plot = BarPlot_Mesenchymal_cells,"BarPlot_Mesenchymal_cells.svg",path = savepath, width = 7, height = 10.5, units = "in")
+```
+```{r Figure4_Epithelial}
+# UMAP
+UMAP_Epithelial <- UMAPPlot(Epithelial_cells,label = T)
+# Dotplot
+DotPlot_Epithelial <- DotPlot(Epithelial_cells,features = c("ENSGALG00015014947","SLC15A1","PRAP1","APOA4","VIL1","KRT40","ANPEP","FABP2","APOA1",
+           "UCN3","TPH1","NEUROD1","ENSGALG00015022117","ENSGALG00015000968","ENSGALG00015015312","ENSGALG00015016059",
+           "BCAS1","TFF3","ENSGALG00015004731","ENSGALG00015021682","TSPAN13",
+           "AvBD10","CD24","MMP7",
+           "OLFM4","LGR5","CENPF","ENSGALG00015010483","SMC2",
+           "DCLK1","ALOX5AP","GFI1B","RGS13","FYB1","IRAG2","ENSGALG00015021519","ENSGALG00015011641","PTPN6"))
+DotPlot_Epithelial <- DotPlot_Epithelial+
+  coord_flip()+
+  scale_color_continuous_c4a_seq('blues',reverse = F)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+DotPlot_Epithelial
+
+# Heatmap of top20 DE genes
+Heatmap_Epithelial <- JS_heatmap(Epithelial_cells,Epithelial_cells_markers)
+Heatmap_Epithelial
+
+# Barplot
+dittoBarPlot_Epithelial_cells <- dittoBarPlot(Epithelial_cells, 
+              var = "orig.ident", 
+              group.by = "ident",
+              color.panel = c("#FFFFFF","#FFFFFF","#808080","#808080","#FFFFFF","#FFFFFF","#808080","#808080"),
+              x.reorder = c(1,2,3,4,5,6))+
+  geom_bar_pattern(stat="identity", pattern_fill = "black",colour = "black", pattern_spacing = 0.03,pattern_density = 0.1,pattern_size=0.7,
+                   pattern= rep(c(rep("none", 4), rep("circle", 4)), 6))+
+  scale_y_continuous(labels = percent) +
+  theme(legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 12),
+    axis.ticks.x = element_blank(),
+    plot.title = element_blank(),
+    axis.line.x.bottom = element_blank(),
+    panel.grid = element_blank(),
+    panel.background = element_blank())
+
+dittoBarPlot_Epithelial_cells
+cluster_info <- Idents(Epithelial_cells)
+cell_counts <- as.data.frame(table(cluster_info))
+# Create a barplot using ggplot2
+barplot_clusters <- ggplot(cell_counts, aes(x = cluster_info, y = Freq, fill = cluster_info)) +
+    geom_bar(stat = "identity",color = "black") +
+    geom_text(aes(label = Freq), vjust = -0.5)+
+    scale_fill_manual(values = hue_pal()(7))+
+    theme(legend.position = "none",
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(size = 12,angle = 90,vjust = 0.5,hjust = 1),
+          axis.text.y = element_text(size = 12),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_line(),
+          axis.line.y.left = element_line(),
+          plot.title = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.background = element_blank())
+barplot_clusters
+# Grid these two plots
+Temporary <- list(dittoBarPlot_Epithelial_cells, barplot_clusters)
+BarPlot_Epithelial_cells <- plot_grid(plotlist = Temporary, ncol=1, align='v')
+BarPlot_Epithelial_cells
+
+ggsave(plot = UMAP_Epithelial,"UMAP_Epithelial.svg",path=savepath, width = 10.5, height = 7, units = "in")
+ggsave(plot = DotPlot_Epithelial ,"DotPlot_Epithelial.svg",path=savepath, width = 8.5, height = 11, units = "in")
+ggsave(plot = BarPlot_Epithelial_cells,"BarPlot_Epithelial_cells.svg",path = savepath, width = 7, height = 10.5, units = "in")
+ggsave(plot = Heatmap_Epithelial,"Heatmap_Epithelial.svg",path = savepath, width = 8.1, height = 6.4, units = "in")
+```
+```{r Figure5_EEC}
+# UMAP
+UMAP_EECs <- UMAPPlot(EECs,label=T)
+UMAP_EECs
+
+# Dotplot
+genes <- c("TRPA1","SLC6A4","TPH1","DDC",
+           "SCT",
+           "GIP","CCK",
+           "SST1","HHEX","ENSGALG00015000607",
+           "MLN","GHRL",
+           "GCG","IRX2","MAFB","INS","PPY")
+DotPlot_EECs <- DotPlot(EECs,features = genes)
+DotPlot_EECs <- DotPlot_EECs+
+  coord_flip()+
+  scale_color_continuous_c4a_seq('blues',reverse = F)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+DotPlot_EECs
+
+# Barplot
+dittoBarPlot_EECs <- dittoBarPlot(EECs, 
+              var = "orig.ident", 
+              group.by = "ident",
+              color.panel = c("#6baed6","#1f78b4","#fdc086","#ff7f00","#4292c6","#08519c","#fdae6b","#e6550d"),
+              x.reorder = c(1,6,7,8,9,10,2,3,4,5))+
+  scale_y_continuous(labels = percent) +
+  theme(legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 12),
+    axis.ticks.x = element_blank(),
+    plot.title = element_blank(),
+    axis.line.x.bottom = element_blank(),
+    panel.grid = element_blank(),
+    panel.background = element_blank())
+dittoBarPlot_EECs
+
+cluster_info <- Idents(EECs)
+cell_counts <- as.data.frame(table(cluster_info))
+# Create a barplot using ggplot2
+barplot_clusters <- ggplot(cell_counts, aes(x = cluster_info, y = Freq, fill = cluster_info)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = Freq), vjust = -0.5)+
+    scale_fill_manual(values = hue_pal()(13))+
+    theme(legend.position = "none",
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(size = 12,angle = 90,vjust = 0.5,hjust = 1),
+          axis.text.y = element_text(size = 12),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_line(),
+          axis.line.y.left = element_line(),
+          plot.title = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.background = element_blank())
+barplot_clusters
+# Grid these two plots
+Temporary <- list(dittoBarPlot_EECs, barplot_clusters)
+BarPlot_EECs <- plot_grid(plotlist = Temporary, ncol=1, align='v')
+BarPlot_EECs
+
+# Legend plot
+dittoBarPlot_EECs_legend <- dittoBarPlot(EECs, 
+              var = "orig.ident", 
+              group.by = "ident",
+              color.panel = c("#6baed6","#1f78b4","#fdc086","#ff7f00","#4292c6","#08519c","#fdae6b","#e6550d"),
+              x.reorder = c(1,3,4,5,6,7,8,9,10,2))+
+  scale_y_continuous(labels = percent)
+dittoBarPlot_EECs_legend
+
+ggsave(plot = UMAP_EECs,"UMAP_EECs.svg",path=savepath, width = 9.5, height = 6, units = "in")
+ggsave(plot = DotPlot_EECs, "DotPlot_EECs.svg",path = savepath, width = 8.5, height = 11, units = "in")
+ggsave(plot = Heatmap_EECs,"Heatmap_EECs.svg",path = savepath, width = 20, height = 22, units = "in")
+ggsave(plot = BarPlot_EECs,"BarPlot_EECs.svg",path = savepath, width = 7, height = 10.5, units = "in")
+ggsave(plot = dittoBarPlot_EECs_legend,"BarPlot_EECs_legend.svg",path = savepath, width = 7, height = 10.5, units = "in")
+```
+```{r Figure6_Immune}
+# Global UMAP
+UMAP_Immune <- UMAPPlot(Immune,label=T)
+
+# Dotplot 
+DotPlot_Immune <- DotPlot(Immune,features = c("TIMD4","CSF1R",
+                 "CTSB","TFEC",
+                 "MAFB","SPI1",
+                 "MITF","ZEB2","NFE2L2","PRDM1",
+                 "CCR2","TLR2A","CEBPB",
+                 "CSF3R","CSF2RA","ENSGALG00015009869","LYZ","LGALS2",
+                 "COL1A2", "COL5A1","COL6A1","ENSGALG00015021719",
+                 "CD3D","CD3E",
+                 "CD247","TCF7",
+                 "BCL11B","TARP",
+                 "GNLY"))
+DotPlot_Immune <- DotPlot_Immune+
+  scale_color_continuous_c4a_seq('blues',reverse = F)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+DotPlot_Immune
+
+# Heatmap of top20 DE genes
+Heatmap_Immune <- JS_heatmap(Immune,Immune_markers)
+Heatmap_Immune
+
+# Barplot
+dittoBarPlot_Immune <- dittoBarPlot(Immune, 
+              var = "orig.ident", 
+              group.by = "ident",
+              color.panel = c("#6baed6","#1f78b4","#fdc086","#ff7f00","#4292c6","#08519c","#fdae6b","#e6550d"),
+              x.reorder = c(1,2,3,4,5,6))+
+  scale_y_continuous(labels = percent) +
+  theme(legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 12),
+    axis.ticks.x = element_blank(),
+    plot.title = element_blank(),
+    axis.line.x.bottom = element_blank(),
+    panel.grid = element_blank(),
+    panel.background = element_blank())
+dittoBarPlot_Immune
+cluster_info <- Idents(Immune)
+cell_counts <- as.data.frame(table(cluster_info))
+# Create a barplot using ggplot2
+barplot_clusters <- ggplot(cell_counts, aes(x = cluster_info, y = Freq, fill = cluster_info)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = Freq), vjust = -0.5)+
+    scale_fill_manual(values = hue_pal()(6))+
+    theme(legend.position = "none",
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(size = 12,angle = 90,vjust = 0.5,hjust = 1),
+          axis.text.y = element_text(size = 12),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_line(),
+          axis.line.y.left = element_line(),
+          plot.title = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.background = element_blank())
+barplot_clusters
+# Grid these two plots
+Temporary <- list(dittoBarPlot_Immune, barplot_clusters)
+BarPlot_Immune <- plot_grid(plotlist = Temporary, ncol=1, align='v')
+BarPlot_Immune
+
+ggsave(plot = UMAP_Immune,"UMAP_Immune.svg",path=savepath, width = 9, height = 7, units = "in")
+ggsave(plot = DotPlot_Immune, "DotPlot_Immune.svg",path = savepath, width = 15, height = 7.5, units = "in")
+ggsave(plot = Heatmap_Immune,"Heatmap_Immune.svg",path = savepath, width = 20, height = 22, units = "in")
+ggsave(plot = BarPlot_Immune,"BarPlot_Immune.svg",path = savepath, width = 7, height = 10.5, units = "in")
+```
+```{r Figure7_D3_comparision}
+load("/external1/jianxuan/rds/Gallues.organoid/Tables/D3_Broiler_VS_Layer/Global_changed.RData")
+global <- lapply(Input_seurat_object.markers.list, `[[`, "gene")
+epithelial <- lapply(Input_seurat_object.markers.list, `[[`, "gene")
+
+# Upset plot for all major lineages
+upset_global <- UpSetR::upset(fromList(global),
+              text.scale = 5, 
+              keep.order = T,
+              nintersects = 4,
+              point.size = 7,
+              nsets = 3,sets.bar.color = hue_pal()(length(global))[c(2,1,4)])
+
+# Upset plot for all epithelial subpopulations
+upset_epithelial <- UpSetR::upset(fromList(epithelial),
+              text.scale = 5, 
+              keep.order = T,
+              sets = c("Epithelial 1","Epithelial 2","Epithelial 4","Epithelial 3"),
+              nintersects = 7,
+              point.size = 7,
+              nsets = 4,
+              sets.bar.color = hue_pal()(length(epithelial))[c(1,2,4,3)])
+
+# VlnPlot of selected genes
+D3_Broiler_vs_Layer <- subset(chicken.organoid,condition==c("D3_Layer","D3_Broiler"))
+gene_ids <- c("BF1","BG2","BG8","BLB2")
+gene_names <- c("BF1","BG2","BG8","BLB2")
+JS_stackedviolin <- function(seuratobject,gene_ids,gene_names){
+  VlnPlot <- VlnPlot(seuratobject,features = gene_ids,slot = "data",assay = "RNA", stack = T,flip = T,same.y.lims = T,split.plot = F, fill.by = "ident", split.by = "condition",cols = c("#2571b1","#f1813c"))+
+    scale_y_discrete(breaks = gene_ids, labels = gene_names) +
+    theme(legend.position="right",
+        legend.key.size=unit(2,"line"),
+        legend.text=element_text(size=22),
+        legend.title = element_text(size=14),
+        axis.line=element_line(colour="black",size=1.25, linetype="solid"),
+        axis.text.x = element_text(angle = 45, hjust=1,vjust = 1,size = 18),
+        axis.text.y = element_text(angle = 0, hjust=0.5,vjust = 0.3,size = 20),
+        strip.text = element_text(size=20,face = "italic",),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.ticks.length=unit(0.3,"cm"))
+  levels(VlnPlot$data$feature) <- tolower(gene_names)
+  VlnPlot+NoLegend()
+}
+VlnPlot_compare_global <- JS_stackedviolin(D3_Broiler_vs_Layer, gene_ids, gene_names)
+
+# Dotplot of selected genes
+D3_Broiler_vs_Layer_Epi <- subset(Epithelial_cells,condition==c("D3_Layer","D3_Broiler"))
+gene_ids <- c("GCG","GHRH")
+gene_names <- c("GCG","GHRH")
+JS_dotplot <- function(seuratobject,gene_ids){
+     DotPlot <- DotPlot(seuratobject,features = gene_ids,assay = "RNA",split.by = "condition",cols = c("#2571b1","#f1813c"))+
+         coord_flip()+
+         theme(axis.text.x = element_text(angle = 45, hjust = 1))
+     DotPlot
+}
+DotPlot_compare_epithelial <- JS_dotplot(D3_Broiler_vs_Layer_Epi, gene_ids)
+DotPlot_compare_epithelial
+
+# ENrichemnt results of comparision in Epi1
+comparelist <- list(reference$Broiler_id[match(upregulated$gene[upregulated$list_index=="Epithelial 1"],reference$Layer_name)],
+                  reference$Broiler_id[match(downregulated$gene[downregulated$list_index=="Epithelial 1"],reference$Layer_name)])
+names(comparelist) <- c("Broiler up-regulated","Layer up-regulated") 
+CompareCluster_Epi1 <- compareCluster(geneCluster = comparelist, 
+               fun = enrichGO,
+               universe = universe_genes,
+               OrgDb= org.Ggallus.eg.db,
+               keyType = "GID",
+               ont= "BP")
+GO_Epi1 <- dotplot(CompareCluster_Epi1,showCategory=10,title='Top 10 GO terms of Enterocytes') + scale_size_area(max_size = 20)
+
+svg("/external1/jianxuan/rds/Gallues.organoid/Figures/upset_global.svg", width = 15, height = 9) 
+upset_global
+dev.off()
+svg("/external1/jianxuan/rds/Gallues.organoid/Figures/upset_epithelial.svg", width = 15, height = 12) 
+upset_epithelial
+dev.off()
+ggsave(plot = VlnPlot_compare_global, "VlnPlot_compare_global.svg",path = savepath, width = 4, height = 4, units = "in")
+ggsave(plot = DotPlot_compare_epithelial, "DotPlot_compare_epithelial.svg",path = savepath, width = 7, height = 4, units = "in")
+ggsave(plot = GO_Epi1, "GO_Epi1.svg",path = savepath, width = 10, height = 14, units = "in")
+```
