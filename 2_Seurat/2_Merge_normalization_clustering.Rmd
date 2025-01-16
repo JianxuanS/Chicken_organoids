@@ -34,11 +34,10 @@ dataset_paths <- list(
 results <- list()
 for (name in names(dataset_paths)) {
   seurat_obj <- readRDS(dataset_paths[[name]])
-  results[[name]] <- process_doublets(seurat_obj, name)
+  results[[name]] <- JS_QC_doublets(seurat_obj, name)
 }
 ```
 ```{r merge_samples}
-set.seed(123)
 # Merge all eight clusters
 chicken.organoid <- merge(adj.LV_1, y = c(adj.LV_2,adj.LV_3,adj.LV_4,adj.LV_5,adj.LV_6,adj.LV_7,adj.LV_8),
                        add.cell.ids = paste0("adj.LV_", 1:8),
