@@ -1,3 +1,3 @@
-# Chicken_enteroids
+# Chicken_organoids
 This is code for manuscript \
-Cellular landscape of avian intestinal enteroids revealed by single cell transcriptomics
+Cellular landscape of avian intestinal organoids revealed by single cell transcriptomics
